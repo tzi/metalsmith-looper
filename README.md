@@ -4,7 +4,7 @@ metalsmith-looper
 A small plugin to iterate over metalsmith data.
 
 
-Quick demo
+Quick example
 ------
 
 ```js
@@ -13,8 +13,8 @@ const looper = require('metalsmith-looper');
 
 Metalsmith(__dirname)
     .metadata({})
-    .source('../content')
-    .destination('../docs')
+    .source('./content')
+    .destination('./docs')
     .use(looper(function({ loopContent }) {
 
         // Loop through HTML files
@@ -23,12 +23,7 @@ Metalsmith(__dirname)
             // Move file and associated assets to another subfolder
             move('/root/' + file.$name);
         });
-    }))
-    .build(function(err) {
-        if (err) {
-            throw err;
-        }
-    });
+    }));
 ```
 
 Looper API
