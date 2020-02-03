@@ -1,6 +1,6 @@
 {
   "name": "metalsmith-looper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "lib to iterate over metalsmith data",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   ],
   "author": "Thomas Zilliox <https://tzi.fr>",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "deep-get-set": "^1.1.0"
   },
   "bugs": {
