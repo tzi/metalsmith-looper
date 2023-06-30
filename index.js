@@ -63,13 +63,11 @@ function moveAssetFiles(files, oldContentName, newContentName) {
       return false;
     }
 
-    const assetId = path.dirname(asset.$name);
-    if (contentId !== assetId) {
+    if (!asset.$name.startsWith(contentId + '/')) {
       return false;
     }
 
-    const newAssetName =
-      path.dirname(newContentName) + '/' + path.basename(asset.$name);
+    const newAssetName = path.dirname(newContentName) + asset.$name.slice(contentId.length);
     if (asset.$name === newAssetName) {
       return false;
     }
