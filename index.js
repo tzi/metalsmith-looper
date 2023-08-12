@@ -110,6 +110,15 @@ function createFileActions(files, file, context) {
     }
   }
 
+  function oneOf(propName, values) {
+    const value = deep(file, propName);
+    if (!values.includes(value)) {
+      throw new Error(
+        `"${file.$name}" "${propName}" do not match any acceptable values.`
+      );
+    }
+  }
+
   function unique(propName) {
     if (!context['uniqueRef'][propName]) {
       context['uniqueRef'][propName] = {};
@@ -146,6 +155,7 @@ function createFileActions(files, file, context) {
     remove,
     move,
     required,
+    oneOf,
     unique,
     setType,
     addReference,
