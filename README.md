@@ -57,9 +57,14 @@ Move the current file, and associated assets, to another destination.
 Remove the current from the sources to treat.
 
 
-### required( propName )
+### required( propName, defaultValue )
 
 Throw an error if the current file doesn't have a specific property.
+
+
+### oneOf( propName, values )
+
+Throw an error if the current file property do not match any the given values.
 
 
 ### unique( propName )
