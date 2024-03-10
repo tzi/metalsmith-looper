@@ -55,6 +55,15 @@ function moveFile(files, oldName, newName) {
   delete files[oldName];
 }
 
+function copyFile(files, sourceName, name, overrideData = {}) {
+  const file = Object.assign({}, files[sourceName]);
+  Object.keys(overrideData).forEach(function(key) {
+    file[key] = overrideData[key];
+  });
+  file.$name = name;
+  files[file.$name] = file;
+}
+
 function moveAssetFiles(files, oldContentName, newContentName) {
   const contentId = removeExtension(oldContentName);
 
@@ -87,6 +96,10 @@ function createFileActions(files, file, context) {
 
   function remove() {
     removeFile(files, file.$name);
+  }
+
+  function copy(name, data = {}) {
+    copyFile(files, oldName, name, data);
   }
 
   function move(newName) {
@@ -152,6 +165,7 @@ function createFileActions(files, file, context) {
   }
 
   return {
+    copy,
     remove,
     move,
     required,
