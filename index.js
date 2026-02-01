@@ -1,5 +1,6 @@
 const path = require('path');
 const deep = require('deep-get-set');
+const { Buffer } = require('node:buffer');
 
 // Indexes
 const indexes = {};
@@ -40,7 +41,7 @@ function removeExtension(fileName) {
 // Files treatment functions
 function loopFiles(files, callback) {
   Object.keys(files).find(function(fileName) {
-    return callback(files[fileName], files);
+    return callback(files[fileName], fileName, files);
   });
 }
 
@@ -53,6 +54,7 @@ function moveFile(files, oldName, newName) {
   file.$name = newName;
   files[newName] = file;
   delete files[oldName];
+  return file;
 }
 
 function copyFile(files, sourceName, name, overrideData = {}) {
@@ -64,10 +66,30 @@ function copyFile(files, sourceName, name, overrideData = {}) {
   files[file.$name] = file;
 }
 
+function createFile(files, type, name, data= {}, contents = '') {
+  const $name = `${type}/${name}`;
+  const file = Object.assign(
+      { layout: type + '.njk' },
+      data,
+      {
+        contents: Buffer.from(contents),
+        $name,
+        $content: true,
+        $type: type,
+      }
+  );
+  files[file.$name] = file;
+  return file;
+}
+
+function getFileExists(files, name) {
+  return typeof files[name] !== 'undefined';
+}
+
 function moveAssetFiles(files, oldContentName, newContentName) {
   const contentId = removeExtension(oldContentName);
 
-  loopFiles(files, function(asset) {
+  loopFiles(files, function(asset, fileName, files) {
     if (isContent(asset)) {
       return false;
     }
@@ -98,8 +120,20 @@ function createFileActions(files, file, context) {
     removeFile(files, file.$name);
   }
 
+  function getAssetName(name) {
+    return removeExtension(file.$name) + '/' + name;
+  }
+
+  function getAssetExists(name) {
+    return getFileExists(files, getAssetName(name));
+  }
+
   function copy(name, data = {}) {
     copyFile(files, oldName, name, data);
+  }
+
+  function copyAsset(name, copyName) {
+    return copyFile(files, getAssetName(name), getAssetName(copyName));
   }
 
   function move(newName) {
@@ -111,12 +145,16 @@ function createFileActions(files, file, context) {
     oldName = file.$name;
   }
 
+  function moveAsset(oldName, newName) {
+    return moveFile(files, getAssetName(oldName), getAssetName(newName));
+  }
+
   function required(propName, defaultValue = null) {
     const value = deep(file, propName);
     if (typeof value === 'undefined') {
       if (defaultValue === null) {
         throw new Error(
-          `"${file.$name}" should have a "${propName}" property.`
+            `"${file.$name}" should have a "${propName}" property.`
         );
       }
       deep(file, propName, defaultValue);
@@ -127,7 +165,7 @@ function createFileActions(files, file, context) {
     const value = deep(file, propName);
     if (!values.includes(value)) {
       throw new Error(
-        `"${file.$name}" "${propName}" do not match any acceptable values.`
+          `"${file.$name}" "${propName}" do not match any acceptable values.`
       );
     }
   }
@@ -139,7 +177,7 @@ function createFileActions(files, file, context) {
     const key = file[propName];
     if (context['uniqueRef'][propName][key]) {
       throw new Error(
-        `Duplicate "${propName}" between "${context['uniqueRef'][propName][key]}" and "${file.$name}".`
+          `Duplicate "${propName}" between "${context['uniqueRef'][propName][key]}" and "${file.$name}".`
       );
     }
     context['uniqueRef'][propName][key] = file.$name;
@@ -153,7 +191,7 @@ function createFileActions(files, file, context) {
     const key = type + path.sep + file[propName] + '.html';
     if (!files[key]) {
       throw new Error(
-        `Unknown "${file[propName]}" defined on "${file.$name}".`
+          `Unknown "${file[propName]}" defined on "${file.$name}".`
       );
     }
     file[propName] = files[key];
@@ -164,26 +202,43 @@ function createFileActions(files, file, context) {
     values.push(file);
   }
 
+  function debug() {
+    console.dir(file);
+  }
+
+  function debugAll() {
+    console.dir(files);
+  }
+
   return {
+    getAssetExists,
     copy,
+    copyAsset,
     remove,
     move,
+    moveAsset,
     required,
     oneOf,
     unique,
     setType,
     addReference,
     addIndex,
-    getIndex
+    getIndex,
+    debug,
+    debugAll,
   };
 }
 
 function createPluginActions(files) {
   function loop(filter, callback) {
     const context = {};
+    return loopFiles(files, function(file, fileName, files) {
+      // If key has been changed since the start of the loop
+      if (!file) {
+        return false;
+      }
 
-    return loopFiles(files, function(file) {
-      if (!filter(file)) {
+      if (!filter(file, fileName)) {
         return false;
       }
 
@@ -195,6 +250,10 @@ function createPluginActions(files) {
 
       return result;
     });
+  }
+
+  function createItem(name, data = {}, contents = '') {
+    return createFile(files, name, data, contents);
   }
 
   function createIndex(name, sortProp, reversed = false) {
@@ -212,7 +271,8 @@ function createPluginActions(files) {
     loopOnType: function(type, callback) {
       return loop(file => file.$type === type, callback);
     },
-    createIndex
+    createIndex,
+    createItem,
   };
 }
 
@@ -233,9 +293,9 @@ function looper(plugin) {
         const contentFileName = fileName.replace('.json', '.html');
         if (files[contentFileName]) {
           Object.entries(JSON.parse(file.contents.toString())).forEach(
-            function([key, data]) {
-              files[contentFileName][key] = data;
-            }
+              function([key, data]) {
+                files[contentFileName][key] = data;
+              }
           );
         }
         delete files[fileName];
@@ -282,9 +342,9 @@ looper.removeExtension = removeExtension;
 // Exposed utils
 looper.slicePath = function(fileName, start, end) {
   return fileName
-    .split(path.sep)
-    .slice(start, end)
-    .join(path.sep);
+      .split(path.sep)
+      .slice(start, end)
+      .join(path.sep);
 };
 
 module.exports = looper;
