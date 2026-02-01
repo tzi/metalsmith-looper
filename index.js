@@ -10,10 +10,35 @@ function getIndex(name, key) {
     throw new Error(`Unknown index "${name}".`);
   }
 
-  if (!indexes[name].values[key]) {
-    indexes[name].values[key] = [];
+  if (indexes[name].options.withKey) {
+    if (!indexes[name].values[key]) {
+      indexes[name].values[key] = indexes[name].options.multiple ? [] : null;
+    }
+    return indexes[name].values[key];
   }
-  return indexes[name].values[key];
+
+  return indexes[name].values;
+}
+
+function addIndexValue(name, value, key) {
+  if (!indexes[name]) {
+    throw new Error(`Unknown index "${name}".`);
+  }
+
+  if (indexes[name].options.withKey) {
+    if (indexes[name].options.multiple) {
+      indexes[name].values[key] = indexes[name].values[key] || [];
+      indexes[name].values[key].push(value);
+    } else {
+      indexes[name].values[key] = value;
+    }
+  } else {
+    if (indexes[name].options.multiple) {
+      indexes[name].values.push(value);
+    } else {
+      indexes[name].values = value;
+    }
+  }
 }
 
 // Utils functions
@@ -198,9 +223,8 @@ function createFileActions(files, file, context) {
     file[propName] = files[key];
   }
 
-  function addIndex(name, key) {
-    const values = getIndex(name, key);
-    values.push(file);
+  function addIndex(name, key = null) {
+    addIndexValue(name, file, key);
   }
 
   function debug() {
@@ -257,11 +281,11 @@ function createPluginActions(files) {
     return createFile(files, type, name, data, contents);
   }
 
-  function createIndex(name, sortProp, reversed = false) {
+  function createIndex(name, options = { }) {
+    options = Object.assign({ withKey: true, multiple: true, reversed: false, sortProp: 'id' }, options);
     indexes[name] = {
-      sortProp,
-      reversed,
-      values: {}
+      options,
+      values: options.withKey ? {} : options.multiple ? [] : null,
     };
   }
 
@@ -318,14 +342,27 @@ function looper(plugin) {
     const sortIndexes = {};
     Object.keys(indexes).forEach(function(name) {
       const index = indexes[name];
-      const propName = index.sortProp;
-      const sign = Boolean(index.reversed) * -2 + 1;
-      sortIndexes[name] = {};
-      Object.keys(index.values).forEach(function(key) {
-        sortIndexes[name][key] = index.values[key].sort(function(a, b) {
+      if (!index.options.multiple) {
+        sortIndexes[name] = index.values;
+        return true;
+      }
+      const propName = index.options.sortProp;
+      if (!propName) {
+        sortIndexes[name] = index.values;
+      }
+      const sign = Boolean(index.options.reversed) * -2 + 1;
+      if (index.options.withKey) {
+        sortIndexes[name] = {};
+        Object.keys(index.values).forEach(function(key) {
+          sortIndexes[name][key] = index.values[key].sort(function(a, b) {
+            return sign * (a[propName] - b[propName]);
+          });
+        });
+      } else {
+        sortIndexes[name] = index.values.sort(function(a, b) {
           return sign * (a[propName] - b[propName]);
         });
-      });
+      }
     });
 
     // Fill object with useful values
