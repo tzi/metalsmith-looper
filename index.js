@@ -146,6 +146,10 @@ function createFileActions(files, file, context) {
     removeFile(files, file.$name);
   }
 
+  function removeAsset(name) {
+    removeFile(files, getAssetName(name));
+  }
+
   function getAssetName(name) {
     return removeExtension(file.$name) + '/' + name;
   }
@@ -237,11 +241,12 @@ function createFileActions(files, file, context) {
 
   return {
     getAssetExists,
-    copy,
     copyAsset,
-    remove,
-    move,
     moveAsset,
+    removeAsset,
+    copy,
+    move,
+    remove,
     required,
     oneOf,
     unique,
