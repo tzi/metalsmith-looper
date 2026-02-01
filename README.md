@@ -44,52 +44,87 @@ Loop through every HTML files from a specific subfolder of the sources.
 Create a new index to reference content file.
 
 
+### createItem( type, name, data, contents )
+
+Create a new item in the files loop.
+
+
 Loop API
 ------
 
-### move( newName )
+### File API
+
+#### move( newName )
 
 Move the current file, and associated assets, to another destination.
 
+#### copy( newName, data = {} )
 
-### remove( )
+Copy the current file to another destination and override some data.
+
+#### remove( )
 
 Remove the current from the sources to treat.
 
-
-### required( propName, defaultValue )
-
-Throw an error if the current file doesn't have a specific property.
-
-
-### oneOf( propName, values )
-
-Throw an error if the current file property do not match any the given values.
-
-
-### unique( propName )
-
-Throw an error if the current file has the same property value than another file.
-
-
-### setType( newType )
+#### setType( newType )
 
 Define the type of document, by default, the type of document is the source subfolder.
 
 
-### addReference( propName, referencedType )
+### Assets API
+
+#### getAssetExists( name ): bool
+
+Return if an asset exists or not.
+
+#### moveAsset( oldName, newName )
+
+Move an associated asset to another destination.
+
+#### copyAsset( name, copyName )
+
+Copy an associated asset to another destination.
+
+
+### Property API
+
+#### required( propName, defaultValue )
+
+Throw an error if the current file doesn't have a specific property.
+
+#### oneOf( propName, values )
+
+Throw an error if the current file property do not match any the given values.
+
+#### unique( propName )
+
+Throw an error if the current file has the same property value than another file.
+
+
+### Index API
+
+#### addReference( propName, referencedType )
 
 Link another file according to a property value. 
 
-
-### addIndex( indexName, key )
+#### addIndex( indexName, key )
 
 Add the current file to a spacific index under a specific key.
 
-
-### getIndex( indexName )
+#### getIndex( indexName )
 
 Retrieve a specific index of files.
+
+
+### Debug API
+
+#### debug( )
+
+Dump current file. 
+
+#### debugAll( )
+
+Dump all files in the loop.
 
 
 Template API

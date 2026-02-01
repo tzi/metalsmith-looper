@@ -252,8 +252,8 @@ function createPluginActions(files) {
     });
   }
 
-  function createItem(name, data = {}, contents = '') {
-    return createFile(files, name, data, contents);
+  function createItem(type, name, data = {}, contents = '') {
+    return createFile(files, type, name, data, contents);
   }
 
   function createIndex(name, sortProp, reversed = false) {
