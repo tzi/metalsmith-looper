@@ -64,6 +64,7 @@ function copyFile(files, sourceName, name, overrideData = {}) {
   });
   file.$name = name;
   files[file.$name] = file;
+  return file;
 }
 
 function createFile(files, type, name, data= {}, contents = '') {
