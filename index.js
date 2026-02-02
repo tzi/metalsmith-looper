@@ -200,6 +200,20 @@ function createFileActions(files, file, context) {
     }
   }
 
+  function shouldBeInteger(propName) {
+    const value = deep(file, propName);
+    const number = +value;
+    const isInteger = number === Math.trunc(number);
+    if (!isInteger) {
+      throw new Error(
+          `"${file.$name}" "${propName}" should be an integer, defined to "${value}" instead.`
+      );
+    }
+    if (number !== value) {
+      deep(file, propName, number);
+    }
+  }
+
   function unique(propName) {
     if (!context['uniqueRef'][propName]) {
       context['uniqueRef'][propName] = {};
@@ -248,6 +262,7 @@ function createFileActions(files, file, context) {
     move,
     remove,
     required,
+    shouldBeInteger,
     oneOf,
     unique,
     setType,
