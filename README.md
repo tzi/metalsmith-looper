@@ -90,6 +90,17 @@ Copy an associated asset to another destination.
 Remove an associated asset.
 
 
+### Async promise API
+
+#### registerOnePromise( promise )
+
+Register one build promise to wait before creating the file system.
+
+#### registerSeveralPromises( promiseList )
+
+Register several promises to wait before creating the file system.
+
+
 ### Property API
 
 #### required( propName, defaultValue )

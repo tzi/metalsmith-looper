@@ -4,6 +4,7 @@ const { Buffer } = require('node:buffer');
 
 // Indexes
 const indexes = {};
+const promisesUntilDone = [];
 
 function getIndex(name, key) {
   if (!indexes[name]) {
@@ -142,28 +143,8 @@ function createFileActions(files, file, context) {
   context['uniqueRef'] = context['uniqueRef'] || {};
   let oldName = file.$name;
 
-  function remove() {
-    removeFile(files, file.$name);
-  }
-
-  function removeAsset(name) {
-    removeFile(files, getAssetName(name));
-  }
-
-  function getAssetName(name) {
-    return removeExtension(file.$name) + '/' + name;
-  }
-
-  function getAssetExists(name) {
-    return getFileExists(files, getAssetName(name));
-  }
-
   function copy(name, data = {}) {
     copyFile(files, oldName, name, data);
-  }
-
-  function copyAsset(name, copyName) {
-    return copyFile(files, getAssetName(name), getAssetName(copyName));
   }
 
   function move(newName) {
@@ -175,9 +156,47 @@ function createFileActions(files, file, context) {
     oldName = file.$name;
   }
 
+  function remove() {
+    removeFile(files, file.$name);
+  }
+
+  function setType(type) {
+    setFileType(file, type);
+  }
+
+  /* Asset API */
+
+  function getAssetName(name) {
+    return removeExtension(file.$name) + '/' + name;
+  }
+
+  function getAssetExists(name) {
+    return getFileExists(files, getAssetName(name));
+  }
+
+  function copyAsset(name, copyName) {
+    return copyFile(files, getAssetName(name), getAssetName(copyName));
+  }
+
   function moveAsset(oldName, newName) {
     return moveFile(files, getAssetName(oldName), getAssetName(newName));
   }
+
+  function removeAsset(name) {
+    removeFile(files, getAssetName(name));
+  }
+
+  /* Async API */
+
+  function registerOnePromise(promise) {
+    promisesUntilDone.push(promise);
+  }
+
+  function registerSeveralPromises(promiseList) {
+    promiseList.forEach(registerOnePromise);
+  }
+
+  /* Properties API */
 
   function required(propName, defaultValue = null) {
     const value = deep(file, propName);
@@ -227,10 +246,6 @@ function createFileActions(files, file, context) {
     context['uniqueRef'][propName][key] = file.$name;
   }
 
-  function setType(type) {
-    setFileType(file, type);
-  }
-
   function addReference(propName, type) {
     const key = type + path.sep + file[propName] + '.html';
     if (!files[key]) {
@@ -245,6 +260,8 @@ function createFileActions(files, file, context) {
     addIndexValue(name, file, key);
   }
 
+  /* Debug API */
+
   function debug() {
     console.dir(file);
   }
@@ -254,21 +271,27 @@ function createFileActions(files, file, context) {
   }
 
   return {
+    copy,
+    move,
+    remove,
+    setType,
+
     getAssetExists,
     copyAsset,
     moveAsset,
     removeAsset,
-    copy,
-    move,
-    remove,
+
+    registerOnePromise,
+    registerSeveralPromises,
+
     required,
     shouldBeInteger,
     oneOf,
     unique,
-    setType,
     addReference,
     addIndex,
     getIndex,
+
     debug,
     debugAll,
   };
@@ -325,6 +348,7 @@ function createPluginActions(files) {
 function looper(plugin) {
   // Return a Metalsmith plugin
   return function(files, metalsmith, done) {
+
     // Add default value as a prop of file
     Object.keys(files).find(function(fileName) {
       const file = files[fileName];
@@ -349,7 +373,7 @@ function looper(plugin) {
 
     // User callback
     const actions = createPluginActions(files);
-    const promise = plugin(actions);
+    plugin(actions);
 
     // Normalize file name as a cross-OS path
     Object.values(files).find(function(file) {
@@ -391,8 +415,8 @@ function looper(plugin) {
       file.$self = file;
     });
 
-    if (promise && promise.then) {
-      promise
+    if (promisesUntilDone.length) {
+      Promise.all(promisesUntilDone)
           .then(() => done())
           .catch(console.error);
     } else {

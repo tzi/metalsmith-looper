@@ -1,6 +1,6 @@
 {
   "name": "metalsmith-looper",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "lib to iterate over metalsmith data",
   "main": "index.js",
   "scripts": {
