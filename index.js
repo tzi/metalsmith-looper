@@ -349,7 +349,7 @@ function looper(plugin) {
 
     // User callback
     const actions = createPluginActions(files);
-    plugin(actions);
+    const promise = plugin(actions);
 
     // Normalize file name as a cross-OS path
     Object.values(files).find(function(file) {
@@ -391,7 +391,13 @@ function looper(plugin) {
       file.$self = file;
     });
 
-    done();
+    if (promise && promise.then) {
+      promise
+          .then(() => done())
+          .catch(console.error);
+    } else {
+      done();
+    }
   };
 }
 
