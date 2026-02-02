@@ -85,12 +85,20 @@ Move an associated asset to another destination.
 
 Copy an associated asset to another destination.
 
+#### removeAsset( name )
+
+Remove an associated asset.
+
 
 ### Property API
 
 #### required( propName, defaultValue )
 
 Throw an error if the current file doesn't have a specific property.
+
+#### shouldBeInteger( propName )
+
+Throw an error if the current file has a specific property and it is not an integer.
 
 #### oneOf( propName, values )
 
