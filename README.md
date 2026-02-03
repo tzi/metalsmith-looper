@@ -109,7 +109,11 @@ Throw an error if the current file doesn't have a specific property.
 
 #### shouldBeInteger( propName )
 
-Throw an error if the current file has a specific property and it is not an integer.
+Throw an error if the current file has a specific property, and it is not an integer.
+
+#### shouldBeURL( propName )
+
+Throw an error if the current file has a specific property, and it is not an URL.
 
 #### oneOf( propName, values )
 

@@ -233,6 +233,13 @@ function createFileActions(files, file, context) {
     }
   }
 
+  function shouldBeURL(propName) {
+    const value = deep(file, propName);
+    const pattern = new URLPattern({ hostname: "*" });
+
+    return pattern.test(value);
+  }
+
   function unique(propName) {
     if (!context['uniqueRef'][propName]) {
       context['uniqueRef'][propName] = {};
@@ -286,6 +293,7 @@ function createFileActions(files, file, context) {
 
     required,
     shouldBeInteger,
+    shouldBeURL,
     oneOf,
     unique,
     addReference,
