@@ -73,9 +73,17 @@ Define the type of document, by default, the type of document is the source subf
 
 ### Assets API
 
+#### getAssetName( name ): string
+
+Return asset full name, prefixed by the current file name.
+
 #### getAssetExists( name ): bool
 
 Return if an asset exists or not.
+
+#### createAsset( name: string, data, contents: string|Buffer )
+
+Move an associated asset to another destination.
 
 #### moveAsset( oldName, newName )
 
