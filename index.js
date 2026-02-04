@@ -94,16 +94,18 @@ function copyFile(files, sourceName, name, overrideData = {}) {
 }
 
 function createFile(files, type, name, data= {}, contents = '') {
-  const $name = `${type}/${name}`;
+  const $name = type ? `${type}/${name}` : name;
   const file = Object.assign(
-      { layout: type + '.njk' },
+      type ? { layout: type + '.njk' } : {},
       data,
       {
-        contents: Buffer.from(contents),
+        contents: Buffer.isBuffer(contents) ? contents : Buffer.from(contents),
         $name,
+      },
+      type ? {
         $content: true,
         $type: type,
-      }
+      } : {}
   );
   files[file.$name] = file;
   return file;
@@ -174,6 +176,10 @@ function createFileActions(files, file, context) {
     return getFileExists(files, getAssetName(name));
   }
 
+  function createAsset(name, data = {}, contents = '') {
+    return createFile(files, false, getAssetName(name), data, contents);
+  }
+
   function copyAsset(name, copyName) {
     return copyFile(files, getAssetName(name), getAssetName(copyName));
   }
@@ -221,6 +227,11 @@ function createFileActions(files, file, context) {
 
   function shouldBeInteger(propName) {
     const value = deep(file, propName);
+    // Type restriction should not implied required property
+    if (typeof value === 'undefined' || value === '') {
+      return true;
+    }
+
     const number = +value;
     const isInteger = number === Math.trunc(number);
     if (!isInteger) {
@@ -235,9 +246,16 @@ function createFileActions(files, file, context) {
 
   function shouldBeURL(propName) {
     const value = deep(file, propName);
-    const pattern = new URLPattern({ hostname: "*" });
-
-    return pattern.test(value);
+    // Type restriction should not implied required property
+    if (typeof value === 'undefined' || value === '') {
+      return true;
+    }
+    try {
+      new URL(value);
+      return true;
+    } catch(error) {
+      return false;
+    }
   }
 
   function unique(propName) {
@@ -283,7 +301,9 @@ function createFileActions(files, file, context) {
     remove,
     setType,
 
+    getAssetName,
     getAssetExists,
+    createAsset,
     copyAsset,
     moveAsset,
     removeAsset,
